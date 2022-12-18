@@ -5,7 +5,7 @@ from serializers import user_schema
 import jwt
 import datetime
 
-@app.route('/', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def register():
     try:
         response = {
@@ -52,16 +52,22 @@ def login():
             'error_message':''
         }
 
+        # get data from the user
         username = request.json.get('username')
         password = request.json.get('password')
 
+        # ensure request body is present
         if not username or not password:
             response['error_message'] = 'Please enter all fields'
             return response, 404
         
         user = Users.query.filter_by(username=username).first()
         if user and bcrypt.check_password_hash(user.password, password):
-            token = jwt.encode({'user':user.username,'exp': datetime.datetime.utcnow()+datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
+            token = jwt.encode({
+                'user':user.username,
+                'exp': datetime.datetime.utcnow()+datetime.timedelta(days=30)}, 
+                app.config['SECRET_KEY']
+                )
             response['data']['token'] = token
 
             user = user_schema.dump(user)

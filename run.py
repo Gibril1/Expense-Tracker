@@ -4,4 +4,4 @@ if __name__ == '__main__':
     app.run(debug=True)
 
 
-from expenses import routes
+from expenses.routes import user_routes
