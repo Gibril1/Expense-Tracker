@@ -9,13 +9,28 @@ class UserSchema(ma.Schema):
 
 user_schema = UserSchema()
 
-class BudgetSchema(ma.Schema):
+class ExpensesSchema(ma.Schema):
     class Meta:
         fields = (
+            'id',
             'date',
             'amount',
             'category',
             'description'
+        )
+
+expenses_schema = ExpensesSchema()
+expensess_schema = ExpensesSchema(many=True)
+
+
+class BudgetSchema(ma.Schema):
+    class Meta:
+        fields = (
+            'id',
+            'start_date',
+            'end_date',
+            'amount',
+            'category'
         )
 
 budget_schema = BudgetSchema()
