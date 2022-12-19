@@ -5,7 +5,9 @@ from models import Expenses
 from serializers import expenses_schema, expensess_schema
 import datetime
 
-@app.route('/create-expenses', methods=['POST'])
+API_URL = '/api/expenses'
+
+@app.route(f'{API_URL}/create', methods=['POST'])
 def create_expenses():
     try:
         response = {
@@ -39,7 +41,7 @@ def create_expenses():
         return response, 500
 
 
-@app.route('/expenses/<int:id>', methods=['GET'])
+@app.route(f'{API_URL}/<int:id>', methods=['GET'])
 @cross_origin
 def get_expenses(id):
     try:
@@ -50,7 +52,7 @@ def get_expenses(id):
 
         expenses = Expenses.query.get(id=id)
         if not expenses:
-            response['error_message'] = f'expenses with id of { id } does not exist'
+            response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
 
         expenses = expenses_schema.dump(expenses)
@@ -59,7 +61,7 @@ def get_expenses(id):
         response['error_message'] = str(e)
         return response, 500
 
-@app.route('/expenses/<int:id>', methods=['PUT'])
+@app.route(f'{API_URL}/<int:id>', methods=['PUT'])
 @cross_origin
 def update_expenses(id):
     try:
@@ -92,7 +94,7 @@ def update_expenses(id):
         response['error_message'] = str(e)
         return response, 500
 
-@app.route('/expenses/<int:id>', methods=['DELETE'])
+@app.route(f'{API_URL}/<int:id>', methods=['DELETE'])
 @cross_origin
 def delete_expenses(id):
     try:
@@ -109,13 +111,13 @@ def delete_expenses(id):
         db.session.delete(expenses)
         db.session.commit()
 
-        response['data'] = expenses.id
+        response['data'] = id
         return response, 204
     except Exception as e:
         response['error_message'] = str(e)
         return response, 500
 
-@app.route('/expensess', methods=['GET'])
+@app.route(f'{API_URL}/', methods=['GET'])
 def get_expensess():
     try:
         response = {
