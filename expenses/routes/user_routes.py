@@ -1,7 +1,7 @@
 from flask import request
 from expenses import app, bcrypt, db
-from models import Users
-from serializers import user_schema
+from expenses.models import Users
+from expenses.serializers import user_schema
 import jwt
 import datetime
 

@@ -1,8 +1,8 @@
 from flask import request
 from flask_cors import cross_origin
 from expenses import app, db
-from models import Budget
-from serializers import budget_schema, budgets_schema
+from expenses.models import Budget
+from expenses.serializers import budget_schema, budgets_schema
 import datetime
 
 API_URL = '/api/budget'
@@ -113,6 +113,23 @@ def delete_budget(id):
 
         response['data'] = id
         return response, 204
+    except Exception as e:
+        response['error_message'] = str(e)
+        return response, 500
+
+
+@app.route(f'{API_URL}/', methods=['GET'])
+def get_budgets():
+    try:
+        response = {
+            'data':{},
+            'error_message':''
+        }
+
+        budgets = Budget.query.all()
+        budgets = budgets_schema.dump(budgets)
+        response['data'] = budgets
+        return response, 200
     except Exception as e:
         response['error_message'] = str(e)
         return response, 500

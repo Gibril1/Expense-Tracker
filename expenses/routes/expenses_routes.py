@@ -1,8 +1,8 @@
 from flask import request
 from flask_cors import cross_origin
 from expenses import app, db
-from models import Expenses
-from serializers import expenses_schema, expensess_schema
+from expenses.models import Expenses
+from expenses.serializers import expenses_schema, expensess_schema
 import datetime
 
 API_URL = '/api/expenses'

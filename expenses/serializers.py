@@ -35,3 +35,16 @@ class BudgetSchema(ma.Schema):
 
 budget_schema = BudgetSchema()
 budgets_schema = BudgetSchema(many=True)
+
+
+class GoalSchema(ma.Schema):
+    class Meta:
+        fields = (
+            'id',
+            'target_amount',
+            'target_date',
+            'description'
+        )
+
+goal_schema = GoalSchema()
+goals_schema = GoalSchema(many=True)
