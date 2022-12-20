@@ -1,4 +1,4 @@
-from expenses import db
+from expense_tracker import db
 
 class Users(db.Model):
     __tablename__ = 'user'

@@ -1,4 +1,4 @@
-from expenses import ma
+from expense_tracker import ma
 
 class UserSchema(ma.Schema):
     class Meta:

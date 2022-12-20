@@ -1,8 +1,8 @@
 from flask import request
 from flask_cors import cross_origin
-from expenses import app, db
-from expenses.models import Budget
-from expenses.serializers import budget_schema, budgets_schema
+from expense_tracker import app, db
+from expense_tracker.models import Budget
+from expense_tracker.serializers import budget_schema, budgets_schema
 import datetime
 
 API_URL = '/api/budget'
@@ -19,14 +19,13 @@ def create_budget():
         data = request.json
 
         # check if amount has been supplied
-        if not data['amount'] or not data['start_date'] or not data['days']:
+        if not data['amount'] or not data['days']:
             response['error_message'] = 'Please enter all fields'
             return response, 400
     
         budget = Budget(
             amount = data['amount'],
             category = data['category'],
-            description = data['description'],
             start_date = datetime.datetime.utcnow(),
             end_date = datetime.datetime.utcnow()+datetime.timedelta(days=data['days'])
         )
@@ -50,12 +49,13 @@ def get_budget(id):
             'error_message':''
         }
 
-        budget = Budget.query.get(id=id)
+        budget = Budget.query.get(id)
         if not budget:
             response['error_message'] = f'Budget with id of { id } does not exist'
             return response, 400
 
         budget = budget_schema.dump(budget)
+        response['data'] = budget
         return response, 200
     except Exception as e:
         response['error_message'] = str(e)
@@ -69,21 +69,24 @@ def update_budget(id):
             'error_message':''
         }
 
-        data = request.json
+        start_date= request.json.get('start_date')
+        end_date= request.json.get('end_date')
+        amount= request.json.get('amount')
+        category= request.json.get('category')
 
-        budget = Budget.query.get(id=id)
+        budget = Budget.query.get(id)
         if not budget:
             response['error_message'] = f'Budget with id of { id } does not exist'
             return response, 400
         
-        if data['start_date']:
-            budget.start_date = data['start_date']
-        if data['end_date']:
-            budget.end_date = data['end_date']
-        if data['amount']:
-            budget.amount = data['amount']
-        if data['category']:
-            budget.category = data['category']
+        if start_date:
+            budget.start_date = start_date
+        if end_date:
+            budget.end_date = end_date
+        if amount:
+            budget.amount = amount
+        if category:
+            budget.category = category
         
         budget = budget_schema.dump(budget)
         response['data'] = budget
@@ -103,7 +106,7 @@ def delete_budget(id):
 
         
 
-        budget = Budget.query.get(id=id)
+        budget = Budget.query.get(id)
         if not budget:
             response['error_message'] = f'Budget with id of { id } does not exist'
             return response, 400

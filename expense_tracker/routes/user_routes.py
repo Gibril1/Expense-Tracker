@@ -1,7 +1,7 @@
 from flask import request
-from expenses import app, bcrypt, db
-from expenses.models import Users
-from expenses.serializers import user_schema
+from expense_tracker import app, bcrypt, db
+from expense_tracker.models import Users
+from expense_tracker.serializers import user_schema
 import jwt
 import datetime
 
@@ -64,7 +64,7 @@ def login():
         user = Users.query.filter_by(username=username).first()
         if user and bcrypt.check_password_hash(user.password, password):
             token = jwt.encode({
-                'user':user.username,
+                'user':user.id,
                 'exp': datetime.datetime.utcnow()+datetime.timedelta(days=30)}, 
                 app.config['SECRET_KEY']
                 )

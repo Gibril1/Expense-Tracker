@@ -5,6 +5,8 @@ from flask_admin import Admin
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
+from dotenv import load_dotenv
+load_dotenv()
 
 import os
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -13,7 +15,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 
 # app config
-app.config['SECRET_KEY'] = 'secretkey'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///'+os.path.join(basedir,'models.db')
 
 # Init cors
@@ -28,4 +30,12 @@ admin = Admin(app)
 bcrypt = Bcrypt(app)
 # Init migrate
 migrate = Migrate(app, db)
+
+from expense_tracker.routes import (
+    user_routes,
+    goal_routes,
+    budget_routes,
+    expenses_routes
+)
+
 

@@ -1,8 +1,8 @@
 from flask import request
 from flask_cors import cross_origin
-from expenses import app, db
-from expenses.models import Expenses
-from expenses.serializers import expenses_schema, expensess_schema
+from expense_tracker import app, db
+from expense_tracker.models import Expenses
+from expense_tracker.serializers import expenses_schema, expensess_schema
 import datetime
 
 API_URL = '/api/expenses'
@@ -42,7 +42,6 @@ def create_expenses():
 
 
 @app.route(f'{API_URL}/<int:id>', methods=['GET'])
-@cross_origin
 def get_expenses(id):
     try:
         response = {
@@ -50,19 +49,19 @@ def get_expenses(id):
             'error_message':''
         }
 
-        expenses = Expenses.query.get(id=id)
+        expenses = Expenses.query.get(id)
         if not expenses:
             response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
 
         expenses = expenses_schema.dump(expenses)
+        response['data'] = expenses
         return response, 200
     except Exception as e:
         response['error_message'] = str(e)
         return response, 500
 
 @app.route(f'{API_URL}/<int:id>', methods=['PUT'])
-@cross_origin
 def update_expenses(id):
     try:
         response = {
@@ -70,32 +69,35 @@ def update_expenses(id):
             'error_message':''
         }
 
-        data = request.json
+        amount = request.json.get('amount')
+        category = request.json.get('category')
+        description = request.json.get('description')
 
-        expenses = Expenses.query.get(id=id)
+        expenses = Expenses.query.get(id)
         if not expenses:
             response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
         
-        if data['amount']:
-            expenses.amount = data['amount']
-        if data['category']:
-            expenses.category = data['category']
-        if data['description']:
-            expenses.description = data['description']
-        
+        if amount:
+            expenses.amount = amount
+        if category:
+            expenses.category = category
+        if description:
+            expenses.description = description
+                                                      
         expenses.date = datetime.datetime.utcnow()
+
+        db.session.commit()
 
         expenses = expenses_schema.dump(expenses)
         response['data'] = expenses
         return response, 201
 
     except Exception as e:
-        response['error_message'] = str(e)
+        response['error_message'] = (e)
         return response, 500
 
 @app.route(f'{API_URL}/<int:id>', methods=['DELETE'])
-@cross_origin
 def delete_expenses(id):
     try:
         response = {
@@ -103,9 +105,9 @@ def delete_expenses(id):
             'error_message':''
         }
 
-        expenses = Expenses.query.get(id=id)
+        expenses = Expenses.query.get(id)
         if not expenses:
-            response['error_message'] = f'expenses with id of { id } does not exist'
+            response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
         
         db.session.delete(expenses)

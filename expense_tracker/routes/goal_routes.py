@@ -1,8 +1,8 @@
 from flask import request
 from flask_cors import cross_origin
-from expenses import app, db
-from expenses.models import Goal
-from expenses.serializers import goal_schema, goals_schema
+from expense_tracker import app, db
+from expense_tracker.models import Goal
+from expense_tracker.serializers import goal_schema, goals_schema
 
 API_URL = '/api/goals'
 
@@ -46,7 +46,7 @@ def get_goal(id):
             'error_message':''
         }
 
-        goal = Goal.query.get(id=id)
+        goal = Goal.query.get(id)
         if not goal:
             response['error_message'] = f'Goal with {id} id not found'
             return response, 400
@@ -66,23 +66,23 @@ def update_goal(id):
             'error_message':''
         }
 
-        data = request.json
+        target_amount= request.json.get('target_amount')
+        target_date= request.json.get('target_date')
+        description= request.json.get('description')
 
-        if not data:
-            response['error_message'] = 'Data has not been given'
-            return response, 400
+       
 
         goal = Goal.query.get(id=id)
         if not goal:
-            response['error_message'] = f'Goal with {id} id not found'
+            response['error_message'] = f'Goal with id of {id} not found'
             return response, 400
 
-        if data['target_amount']:
-            goal.target_amount = data['target_amount']
-        if data['target_date']:
-            goal.target_date = data['target_date']
-        if data['description']:
-            goal.description = data['description']
+        if target_amount:
+            goal.target_amount = target_amount
+        if target_date:
+            goal.target_date = target_date
+        if description:
+            goal.description = description
 
         goal = goal_schema.dump(goal)
         response['data'] = goal
@@ -100,7 +100,7 @@ def delete_goal(id):
             'error_message':''
         }
 
-        goal = Goal.query.get(id=id)
+        goal = Goal.query.get(id)
         if not goal:
             response['error_message'] = f'Goal with {id} id not found'
             return response, 400
@@ -110,6 +110,23 @@ def delete_goal(id):
 
         response['data'] = id
         return response, 204
+    except Exception as e:
+        response['error_message'] = str(e)
+        return response, 500
+
+@app.route(f'{API_URL}/', methods=['GET'])
+def get_goals():
+    try:
+        response = {
+            'data':{},
+            'error_message':''
+        }
+
+        goals = Goal.query.all()
+        goals = goals_schema.dump(goals)
+        response['data'] = goals
+        return response, 200
+        
     except Exception as e:
         response['error_message'] = str(e)
         return response, 500
