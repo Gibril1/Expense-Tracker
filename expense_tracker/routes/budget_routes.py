@@ -1,14 +1,15 @@
 from flask import request
-from flask_cors import cross_origin
 from expense_tracker import app, db
 from expense_tracker.models import Budget
 from expense_tracker.serializers import budget_schema, budgets_schema
+from expense_tracker.auth_middleware import token_required
 import datetime
 
 API_URL = '/api/budget'
 
 @app.route(f'{API_URL}/create', methods=['POST'])
-def create_budget():
+@token_required
+def create_budget(f):
     try:
         response = {
         'data':{},
@@ -25,6 +26,7 @@ def create_budget():
     
         budget = Budget(
             amount = data['amount'],
+            user= f.id,
             category = data['category'],
             start_date = datetime.datetime.utcnow(),
             end_date = datetime.datetime.utcnow()+datetime.timedelta(days=data['days'])
@@ -42,7 +44,8 @@ def create_budget():
 
 
 @app.route(f'{API_URL}/<int:id>', methods=['GET'])
-def get_budget(id):
+@token_required
+def get_budget(f,id):
     try:
         response = {
             'data':{},
@@ -53,6 +56,10 @@ def get_budget(id):
         if not budget:
             response['error_message'] = f'Budget with id of { id } does not exist'
             return response, 400
+        
+        if f.id != budget.user:
+            response['error_message'] = 'You are not authorized to get this budget'
+            return response, 401
 
         budget = budget_schema.dump(budget)
         response['data'] = budget
@@ -62,7 +69,8 @@ def get_budget(id):
         return response, 500
 
 @app.route(f'{API_URL}/<int:id>', methods=['PUT'])
-def update_budget(id):
+@token_required
+def update_budget(f,id):
     try:
         response = {
             'data':{},
@@ -78,7 +86,11 @@ def update_budget(id):
         if not budget:
             response['error_message'] = f'Budget with id of { id } does not exist'
             return response, 400
-        
+
+        if f.id != budget.user:
+            response['error_message'] = 'You are not authorized to update this budget'
+            return response, 401
+
         if start_date:
             budget.start_date = start_date
         if end_date:
@@ -97,7 +109,8 @@ def update_budget(id):
         return response, 500
 
 @app.route(f'{API_URL}/<int:id>', methods=['DELETE'])
-def delete_budget(id):
+@token_required
+def delete_budget(f,id):
     try:
         response = {
             'data':{},
@@ -110,6 +123,10 @@ def delete_budget(id):
         if not budget:
             response['error_message'] = f'Budget with id of { id } does not exist'
             return response, 400
+        
+        if f.id != budget.user:
+            response['error_message'] = 'You are not authorized to get this budget'
+            return response, 401
 
         db.session.delete(budget)
         db.session.commit()
@@ -122,14 +139,15 @@ def delete_budget(id):
 
 
 @app.route(f'{API_URL}/', methods=['GET'])
-def get_budgets():
+@token_required
+def get_budgets(f):
     try:
         response = {
             'data':{},
             'error_message':''
         }
 
-        budgets = Budget.query.all()
+        budgets = Budget.query.filter_by(user=f.id).all()
         budgets = budgets_schema.dump(budgets)
         response['data'] = budgets
         return response, 200

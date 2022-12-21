@@ -3,12 +3,14 @@ from flask_cors import cross_origin
 from expense_tracker import app, db
 from expense_tracker.models import Expenses
 from expense_tracker.serializers import expenses_schema, expensess_schema
+from expense_tracker.auth_middleware import token_required
 import datetime
 
 API_URL = '/api/expenses'
 
 @app.route(f'{API_URL}/create', methods=['POST'])
-def create_expenses():
+@token_required
+def create_expenses(f):
     try:
         response = {
         'data':{},
@@ -25,6 +27,7 @@ def create_expenses():
     
         expenses = Expenses(
             amount = data['amount'],
+            user = f.id,
             category = data['category'],
             description = data['description'],
             date = datetime.datetime.utcnow()
@@ -42,7 +45,8 @@ def create_expenses():
 
 
 @app.route(f'{API_URL}/<int:id>', methods=['GET'])
-def get_expenses(id):
+@token_required
+def get_expenses(f,id):
     try:
         response = {
             'data':{},
@@ -53,6 +57,11 @@ def get_expenses(id):
         if not expenses:
             response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
+        
+        if f.id != expenses.user:
+            response['error_message'] = 'You are not authorized to get this expenses'
+            return response, 401
+
 
         expenses = expenses_schema.dump(expenses)
         response['data'] = expenses
@@ -62,7 +71,8 @@ def get_expenses(id):
         return response, 500
 
 @app.route(f'{API_URL}/<int:id>', methods=['PUT'])
-def update_expenses(id):
+@token_required
+def update_expenses(f, id):
     try:
         response = {
             'data':{},
@@ -77,6 +87,10 @@ def update_expenses(id):
         if not expenses:
             response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
+
+        if f.id != expenses.user:
+            response['error_message'] = 'You are not authorized to get this expenses'
+            return response, 401
         
         if amount:
             expenses.amount = amount
@@ -98,7 +112,8 @@ def update_expenses(id):
         return response, 500
 
 @app.route(f'{API_URL}/<int:id>', methods=['DELETE'])
-def delete_expenses(id):
+@token_required
+def delete_expenses(f,id):
     try:
         response = {
             'data':{},
@@ -109,6 +124,10 @@ def delete_expenses(id):
         if not expenses:
             response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
+
+        if f.id != expenses.user:
+            response['error_message'] = 'You are not authorized to get this expenses'
+            return response, 401
         
         db.session.delete(expenses)
         db.session.commit()
@@ -120,14 +139,15 @@ def delete_expenses(id):
         return response, 500
 
 @app.route(f'{API_URL}/', methods=['GET'])
-def get_expensess():
+@token_required
+def get_expensess(f):
     try:
         response = {
             'data':{},
             'error_message':''
         }
 
-        expensess = Expenses.query.all()
+        expensess = Expenses.query.filter_by(user=f.id).all()
 
         expensess = expensess_schema.dump(expensess)
         response['data'] = expensess

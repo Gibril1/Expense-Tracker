@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, make_response
 from expense_tracker import app, bcrypt, db
 from expense_tracker.models import Users
 from expense_tracker.serializers import user_schema

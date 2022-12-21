@@ -13,6 +13,7 @@ class ExpensesSchema(ma.Schema):
     class Meta:
         fields = (
             'id',
+            'user',
             'date',
             'amount',
             'category',
@@ -27,6 +28,7 @@ class BudgetSchema(ma.Schema):
     class Meta:
         fields = (
             'id',
+            'user',
             'start_date',
             'end_date',
             'amount',
@@ -41,6 +43,7 @@ class GoalSchema(ma.Schema):
     class Meta:
         fields = (
             'id',
+            'user',
             'target_amount',
             'target_date',
             'description'

@@ -3,11 +3,13 @@ from flask_cors import cross_origin
 from expense_tracker import app, db
 from expense_tracker.models import Goal
 from expense_tracker.serializers import goal_schema, goals_schema
+from expense_tracker.auth_middleware import token_required
 
 API_URL = '/api/goals'
 
 @app.route(f'{API_URL}/create', methods=['POST'])
-def create_goal():
+@token_required
+def create_goal(f):
     try:
         response = {
         'data':{},
@@ -23,6 +25,7 @@ def create_goal():
 
         goal = Goal(
             target_amount = data['target_amount'],
+            user = f.id,
             target_date = data['target_date'],
             description = data['description']
         )
@@ -39,7 +42,8 @@ def create_goal():
 
 
 @app.route(f'{API_URL}/<int:id>', methods=['GET'])
-def get_goal(id):
+@token_required
+def get_goal(f,id):
     try:
         response = {
             'data':{},
@@ -50,6 +54,10 @@ def get_goal(id):
         if not goal:
             response['error_message'] = f'Goal with {id} id not found'
             return response, 400
+        
+        if f.id != goal.user:
+            response['error_message'] = 'You are not authorised to get this goal'
+            return response, 401
 
         goal = goal_schema.dump(goal)
         response['data'] = goal
@@ -59,7 +67,8 @@ def get_goal(id):
         return response, 500
 
 @app.route(f'{API_URL}/<int:id>', methods=['PUT'])
-def update_goal(id):
+@token_required
+def update_goal(f,id):
     try:
         response = {
             'data':{},
@@ -76,6 +85,10 @@ def update_goal(id):
         if not goal:
             response['error_message'] = f'Goal with id of {id} not found'
             return response, 400
+        
+        if f.id != goal.user:
+            response['error_message'] = 'You are not authorised to get this goal'
+            return response, 401
 
         if target_amount:
             goal.target_amount = target_amount
@@ -93,7 +106,8 @@ def update_goal(id):
         return response, 500
 
 @app.route(f'{API_URL}/<int:id>', methods=['DELETE'])
-def delete_goal(id):
+@token_required
+def delete_goal(f,id):
     try:
         response = {
             'data':{},
@@ -105,6 +119,10 @@ def delete_goal(id):
             response['error_message'] = f'Goal with {id} id not found'
             return response, 400
         
+        if f.id != goal.user:
+            response['error_message'] = 'You are not authorised to get this goal'
+            return response, 401
+
         db.session.delete(goal)
         db.session.commit()
 
@@ -115,14 +133,15 @@ def delete_goal(id):
         return response, 500
 
 @app.route(f'{API_URL}/', methods=['GET'])
-def get_goals():
+@token_required
+def get_goals(f):
     try:
         response = {
             'data':{},
             'error_message':''
         }
 
-        goals = Goal.query.all()
+        goals = Goal.query.filter_by(user=f.id).all()
         goals = goals_schema.dump(goals)
         response['data'] = goals
         return response, 200
