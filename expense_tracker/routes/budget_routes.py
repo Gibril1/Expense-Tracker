@@ -9,7 +9,7 @@ API_URL = '/api/budget'
 
 @app.route(f'{API_URL}/create', methods=['POST'])
 @token_required
-def create_budget(f):
+def create_budget(user):
     try:
         response = {
         'data':{},
@@ -26,7 +26,7 @@ def create_budget(f):
     
         budget = Budget(
             amount = data['amount'],
-            user= f.id,
+            user= user.id,
             category = data['category'],
             start_date = datetime.datetime.utcnow(),
             end_date = datetime.datetime.utcnow()+datetime.timedelta(days=data['days'])
@@ -45,7 +45,7 @@ def create_budget(f):
 
 @app.route(f'{API_URL}/<int:id>', methods=['GET'])
 @token_required
-def get_budget(f,id):
+def get_budget(user,id):
     try:
         response = {
             'data':{},
@@ -57,7 +57,7 @@ def get_budget(f,id):
             response['error_message'] = f'Budget with id of { id } does not exist'
             return response, 400
         
-        if f.id != budget.user:
+        if user.id != budget.user:
             response['error_message'] = 'You are not authorized to get this budget'
             return response, 401
 
@@ -70,7 +70,7 @@ def get_budget(f,id):
 
 @app.route(f'{API_URL}/<int:id>', methods=['PUT'])
 @token_required
-def update_budget(f,id):
+def update_budget(user,id):
     try:
         response = {
             'data':{},
@@ -87,7 +87,7 @@ def update_budget(f,id):
             response['error_message'] = f'Budget with id of { id } does not exist'
             return response, 400
 
-        if f.id != budget.user:
+        if user.id != budget.user:
             response['error_message'] = 'You are not authorized to update this budget'
             return response, 401
 
@@ -110,7 +110,7 @@ def update_budget(f,id):
 
 @app.route(f'{API_URL}/<int:id>', methods=['DELETE'])
 @token_required
-def delete_budget(f,id):
+def delete_budget(user,id):
     try:
         response = {
             'data':{},
@@ -124,7 +124,7 @@ def delete_budget(f,id):
             response['error_message'] = f'Budget with id of { id } does not exist'
             return response, 400
         
-        if f.id != budget.user:
+        if user.id != budget.user:
             response['error_message'] = 'You are not authorized to get this budget'
             return response, 401
 
@@ -140,14 +140,14 @@ def delete_budget(f,id):
 
 @app.route(f'{API_URL}/', methods=['GET'])
 @token_required
-def get_budgets(f):
+def get_budgets(user):
     try:
         response = {
             'data':{},
             'error_message':''
         }
 
-        budgets = Budget.query.filter_by(user=f.id).all()
+        budgets = Budget.query.filter_by(user=user.id).all()
         budgets = budgets_schema.dump(budgets)
         response['data'] = budgets
         return response, 200

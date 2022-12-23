@@ -1,16 +1,18 @@
 from flask import request
 from flask_cors import cross_origin
 from expense_tracker import app, db
-from expense_tracker.models import Expenses
+from expense_tracker.models import Expenses, Budget
 from expense_tracker.serializers import expenses_schema, expensess_schema
 from expense_tracker.auth_middleware import token_required
 import datetime
 
 API_URL = '/api/expenses'
 
-@app.route(f'{API_URL}/create', methods=['POST'])
+
+
+@app.route(f'{API_URL}/create/<int:id>', methods=['POST'])
 @token_required
-def create_expenses(f):
+def create_expenses(user, id):
     try:
         response = {
         'data':{},
@@ -24,17 +26,35 @@ def create_expenses(f):
         if not data['amount']:
             response['error_message'] = 'Amount has not been specified'
             return response, 400
-    
+
+        # get the specific budget in which this expense is being deducted from
+        budget = Budget.query.get(id)
+
+        if not budget:
+            response['error_message'] = f'Budget with id of {id} does not exist'
+            return response, 400
+
+        # making entries into the database
         expenses = Expenses(
             amount = data['amount'],
-            user = f.id,
+            user = user.id,
+            budget = budget.id,
             category = data['category'],
             description = data['description'],
             date = datetime.datetime.utcnow()
         )
-
         db.session.add(expenses)
         db.session.commit()
+
+        budget.remainder += data['amount']
+
+        # checking to see if the expenses have exceeded the set budget
+        budget.status = True if budget.remainder > budget.amount else False
+
+    
+
+        db.session.commit()
+        
 
         expenses = expenses_schema.dump(expenses)
         response['data'] = expenses
@@ -46,7 +66,7 @@ def create_expenses(f):
 
 @app.route(f'{API_URL}/<int:id>', methods=['GET'])
 @token_required
-def get_expenses(f,id):
+def get_expenses(user,id):
     try:
         response = {
             'data':{},
@@ -58,7 +78,7 @@ def get_expenses(f,id):
             response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
         
-        if f.id != expenses.user:
+        if user.id != expenses.user:
             response['error_message'] = 'You are not authorized to get this expenses'
             return response, 401
 
@@ -72,7 +92,7 @@ def get_expenses(f,id):
 
 @app.route(f'{API_URL}/<int:id>', methods=['PUT'])
 @token_required
-def update_expenses(f, id):
+def update_expenses(user, id):
     try:
         response = {
             'data':{},
@@ -88,7 +108,7 @@ def update_expenses(f, id):
             response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
 
-        if f.id != expenses.user:
+        if user.id != expenses.user:
             response['error_message'] = 'You are not authorized to get this expenses'
             return response, 401
         
@@ -113,7 +133,7 @@ def update_expenses(f, id):
 
 @app.route(f'{API_URL}/<int:id>', methods=['DELETE'])
 @token_required
-def delete_expenses(f,id):
+def delete_expenses(user,id):
     try:
         response = {
             'data':{},
@@ -125,7 +145,7 @@ def delete_expenses(f,id):
             response['error_message'] = f'Expenses with id of { id } does not exist'
             return response, 400
 
-        if f.id != expenses.user:
+        if user.id != expenses.user:
             response['error_message'] = 'You are not authorized to get this expenses'
             return response, 401
         
@@ -138,16 +158,25 @@ def delete_expenses(f,id):
         response['error_message'] = str(e)
         return response, 500
 
-@app.route(f'{API_URL}/', methods=['GET'])
+@app.route(f'{API_URL}/all/<int:id>', methods=['GET'])
 @token_required
-def get_expensess(f):
+def get_expensess(user, id):
     try:
         response = {
             'data':{},
             'error_message':''
         }
 
-        expensess = Expenses.query.filter_by(user=f.id).all()
+        budget = Budget.query.get(id)
+        if not budget:
+            response['error_message'] = f'Budget with id of {id} does not exist'
+            return response, 400
+
+        if user.id != budget.user:
+            response['error_message'] = 'You are not authorized'
+            return response, 401
+
+        expensess = Expenses.query.filter_by(budget=budget.id).all()
 
         expensess = expensess_schema.dump(expensess)
         response['data'] = expensess

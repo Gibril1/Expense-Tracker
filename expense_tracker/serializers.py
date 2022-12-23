@@ -14,6 +14,7 @@ class ExpensesSchema(ma.Schema):
         fields = (
             'id',
             'user',
+            'budget',
             'date',
             'amount',
             'category',
@@ -32,7 +33,9 @@ class BudgetSchema(ma.Schema):
             'start_date',
             'end_date',
             'amount',
-            'category'
+            'category',
+            'status',
+            'remainder'
         )
 
 budget_schema = BudgetSchema()

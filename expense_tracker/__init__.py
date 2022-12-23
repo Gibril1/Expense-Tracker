@@ -31,6 +31,7 @@ bcrypt = Bcrypt(app)
 # Init migrate
 migrate = Migrate(app, db)
 
+
 from expense_tracker.routes import (
     user_routes,
     goal_routes,
