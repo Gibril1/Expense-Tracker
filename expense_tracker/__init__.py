@@ -39,4 +39,12 @@ from expense_tracker.routes import (
     expenses_routes
 )
 
+from expense_tracker.admin import (
+    UserModelView,
+    SavingsModelView,
+    BudgetModelView,
+    ExpensesModelView,
+    GoalModelView
+)
+
 

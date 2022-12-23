@@ -9,6 +9,21 @@ class UserSchema(ma.Schema):
 
 user_schema = UserSchema()
 
+
+class SavingsSchema(ma.Schema):
+    class Meta:
+        fields = (
+            'id',
+            'user',
+            'goal',
+            'amount',
+            'date_created'
+        )
+
+saving_schema = SavingsSchema()
+savings_schema = SavingsSchema(many=True)
+
+
 class ExpensesSchema(ma.Schema):
     class Meta:
         fields = (

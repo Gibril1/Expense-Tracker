@@ -1,4 +1,6 @@
-from expense_tracker import db
+from expense_tracker import db, admin
+
+
 
 class Users(db.Model):
     __tablename__ = 'user'
@@ -20,10 +22,11 @@ class Users(db.Model):
 class Savings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False)
+    goal = db.Column(db.Integer, db.ForeignKey('goal.id'), nullable = False)
     amount = db.Column(db.Integer, nullable=False)
     date_created = db.Column(db.Date, nullable=False)
 
-    goal_saving = db.relationship('Goal', backref='goal_saving', lazy=True, uselist=False)
+    
 
     def __str__(self):
         return self.amount
@@ -66,17 +69,19 @@ class Goal(db.Model):
     __tablename__ = 'goal'
     id = db.Column(db.Integer, primary_key=True)
     user = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False)
-    savings = db.Column(db.Integer, db.ForeignKey('savings.id'), nullable = False)
     target_amount = db.Column(db.Integer, nullable=False)
     target_date = db.Column(db.Date, nullable=False)
     description = db.Column(db.String(100))
     savings_amount = db.Column(db.Integer, default=0)
+    savings = db.relationship('Savings', backref='expense_budget', lazy=True)
+
     
 
 
 
     def __str__(self):
         return self.target_amount
+
 
 
 
